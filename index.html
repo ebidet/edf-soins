@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EDF Handball — Suivi Soins</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
+
+:root {
+  --blue:#002F87; --blue-mid:#0044cc; --blue-light:#e6ecfa;
+  --red:#E8001A; --red-light:#fdeef0;
+  --g0:#f4f5f9; --g1:#e8eaf2; --g2:#c8ccda; --g3:#868fac; --g4:#454e6b; --g5:#171c2e;
+  --green:#00966d; --green-light:#e6f5f1;
+  --orange:#e07000; --orange-light:#fff3e6;
+  --r:12px; --rsm:8px; --sh:0 2px 10px rgba(0,47,135,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Barlow',sans-serif;background:var(--g0);color:var(--g5);min-height:100dvh;overscroll-behavior:none}
+
+.app-header{background:var(--blue);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 14px rgba(0,0,0,.22)}
+.hdr-emblem{width:40px;height:40px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-text{flex:1}
+.hdr-text h1{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:900;letter-spacing:.6px;line-height:1}
+.hdr-text p{font-size:11px;opacity:.6;font-family:'DM Mono',monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;color:#fff;flex-shrink:0}
+
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--g1);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:none;background:none;cursor:pointer;color:var(--g3);font-size:10px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;text-transform:uppercase;transition:color .15s}
+.nbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nbtn.active{color:var(--blue)}
+
+.page{display:none;padding:14px;padding-bottom:84px}
+.page.active{display:block}
+
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.card-hd{padding:12px 14px 10px;border-bottom:1px solid var(--g1);display:flex;align-items:center;gap:8px}
+.card-hd h2{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.9px}
+.card-hd .sp{flex:1}
+.card-bd{padding:14px}
+
+.fl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--g3);margin-bottom:5px;display:block}
+.fg{margin-bottom:13px}
+select,input[type="text"],input[type="date"],textarea{width:100%;border:1.5px solid var(--g1);border-radius:var(--rsm);padding:10px 12px;font-size:15px;font-family:'Barlow',sans-serif;color:var(--g5);background:#fff;appearance:none;-webkit-appearance:none;outline:none;transition:border-color .15s}
+select:focus,input:focus,textarea:focus{border-color:var(--blue-mid)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23868fac' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:34px}
+textarea{resize:none;height:60px;font-size:14px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 12px;border-radius:20px;border:1.5px solid var(--g1);font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--g4);transition:all .12s;font-family:'Barlow',sans-serif;user-select:none}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+
+/* ── ACTE BUILDER ── */
+.acte-builder{background:var(--g0);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.acte-builder-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--g3);margin-bottom:12px}
+.zg-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--g3);margin:10px 0 5px;padding-left:1px}
+
+/* ── ACTE LIST (actes ajoutés) ── */
+.actes-list{margin-bottom:12px}
+.acte-pill{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--g1);border-radius:10px;padding:9px 12px;margin-bottom:7px}
+.acte-pill-body{flex:1;min-width:0}
+.acte-pill-cat{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.acte-pill-cat.str{color:var(--red)}
+.acte-pill-cat.soi{color:var(--green)}
+.acte-pill-cat.urg{color:var(--orange)}
+.acte-pill-detail{font-size:11px;color:var(--g3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acte-remove{width:26px;height:26px;border:none;border-radius:6px;background:var(--red-light);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;line-height:1}
+
+.add-acte-btn{width:100%;padding:11px;border-radius:var(--rsm);border:2px dashed var(--g2);background:var(--g0);color:var(--g4);font-size:14px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.add-acte-btn:active{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+
+/* ── BTN ── */
+.btn{width:100%;padding:13px;border-radius:var(--r);border:none;font-size:16px;font-weight:800;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-grey{background:var(--g1);color:var(--g4)}
+.btn-sm{width:auto;padding:7px 14px;font-size:13px;border-radius:var(--rsm)}
+.btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--g5);color:#fff;padding:9px 20px;border-radius:24px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}.toast.warn{background:var(--orange)}
+
+/* ── MODAL ── */
+.moverlay{position:fixed;inset:0;background:rgba(23,28,46,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.moverlay.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;padding:18px 16px 36px}
+.modal-handle{width:38px;height:4px;background:var(--g2);border-radius:2px;margin:0 auto 18px}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.modal-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--g3);margin:14px 0 6px}
+
+/* ── SOIN ITEMS ── */
+.soin-item{padding:11px 14px;border-bottom:1px solid var(--g0);display:flex;align-items:flex-start;gap:9px;cursor:pointer}
+.soin-item:last-child{border-bottom:none}
+.soin-av{width:34px;height:34px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Barlow Condensed',sans-serif}
+.soin-av.red{background:var(--red-light);color:var(--red)}
+.soin-av.orange{background:var(--orange-light);color:var(--orange)}
+.soin-info{flex:1;min-width:0}
+.soin-info .jn{font-weight:800;font-size:14px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.5px}
+.soin-info .detail{font-size:11px;color:var(--g3);margin-top:2px;line-height:1.5}
+.soin-meta{text-align:right;flex-shrink:0}
+.soin-meta .time{font-family:'DM Mono',monospace;font-size:10px;color:var(--g3)}
+
+/* ── ACTE MINI TAG ── */
+.acte-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;margin:2px 2px 0 0;white-space:nowrap}
+.at-str{background:var(--red-light);color:var(--red)}
+.at-soi{background:var(--green-light);color:var(--green)}
+.at-urg{background:var(--orange-light);color:var(--orange)}
+
+/* ── STATS ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.stat-box{background:var(--g0);border-radius:var(--rsm);padding:11px;text-align:center}
+.stat-box .val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:900;color:var(--blue);line-height:1}
+.stat-box .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g3);margin-top:3px}
+.stat-box.red .val{color:var(--red)}.stat-box.green .val{color:var(--green)}.stat-box.orange .val{color:var(--orange)}
+.bar-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.bar-lbl{font-size:12px;font-weight:600;width:110px;flex-shrink:0;color:var(--g4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:7px;background:var(--g1);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .5s ease}
+.bar-fill.red{background:var(--red)}.bar-fill.green{background:var(--green)}.bar-fill.orange{background:var(--orange)}
+.bar-n{font-family:'DM Mono',monospace;font-size:11px;color:var(--g3);width:22px;text-align:right}
+
+/* ── MISC ── */
+.jr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--g0)}
+.jr:last-child{border-bottom:none}
+.jr-nom{flex:1;font-weight:600;font-size:14px}
+.jr-n{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--blue);width:26px;text-align:right}
+.icon-btn{width:28px;height:28px;border:none;border-radius:6px;background:var(--g0);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g3);flex-shrink:0}
+.icon-btn.del{background:var(--red-light);color:var(--red)}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rass-card{color:#fff;border-radius:var(--r);padding:13px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:var(--sh)}
+.rass-card h3{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;flex:1}
+.rass-card .rdates{font-size:11px;opacity:.7;font-family:'DM Mono',monospace;margin-top:2px}
+.rass-card .rcount{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;flex-shrink:0}
+.sec{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--g3);margin:14px 0 7px;padding-left:2px}
+.div{height:1px;background:var(--g1);margin:11px 0}
+.empty{text-align:center;padding:28px 16px;color:var(--g3)}
+.empty svg{width:36px;height:36px;opacity:.3;margin-bottom:9px;stroke:var(--g3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.empty p{font-size:13px}
+.prat-btn{display:block;width:100%;padding:13px 16px;margin-bottom:8px;border:2px solid var(--g1);border-radius:var(--r);background:#fff;text-align:left;font-size:16px;font-weight:700;font-family:'Barlow',sans-serif;cursor:pointer}
+.prat-btn.sel{background:var(--blue);color:#fff;border-color:var(--blue)}
+.import-zone{border:2px dashed var(--g2);border-radius:var(--r);padding:22px 14px;text-align:center;cursor:pointer;background:var(--g0)}
+.import-zone p{font-size:13px;color:var(--g3);margin-top:7px}
+.import-zone svg{width:30px;height:30px;stroke:var(--g3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.frow{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:11px;scrollbar-width:none}
+.frow::-webkit-scrollbar{display:none}
+.fchip{padding:6px 13px;border-radius:20px;border:1.5px solid var(--g1);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;background:#fff;color:var(--g4);transition:all .12s;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:.4px;text-transform:uppercase}
+.fchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.warn-banner{background:var(--orange-light);border:1px solid var(--orange);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--orange);margin-bottom:12px;font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="hdr-emblem" style="width:72px;height:40px;border-radius:6px;overflow:hidden;background:#002F87;padding:0">
+    <img src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;object-position:center" alt="FFHB">
+  </div>
+  <div class="hdr-text">
+    <h1>Suivi Soins</h1>
+    <p id="hdr-rass">Aucun rassemblement actif</p>
+  </div>
+  <button class="hdr-badge" onclick="openModal('modal-prat')"><span id="hdr-prat">Choisir kiné</span></button>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<!-- ① SAISIE ─────────────────────────────────────────── -->
+<div class="page active" id="pg-saisie">
+  <div id="warn-rass" class="warn-banner" style="display:none">⚠️ Activez un rassemblement dans l'onglet Rass.</div>
+  <div id="warn-prat" class="warn-banner" style="display:none">⚠️ Identifiez-vous (bouton en haut à droite)</div>
+
+  <div class="card">
+    <div class="card-hd">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      <h2>Nouveau soin</h2>
+      <div class="sp"></div>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--g3)" id="clock"></span>
+    </div>
+    <div class="card-bd">
+
+      <!-- JOUEUR -->
+      <div class="fg">
+        <label class="fl">Joueur</label>
+        <select id="sel-joueur"><option value="">— Sélectionner —</option></select>
+      </div>
+
+      <!-- CONTEXTE GLOBAL -->
+      <div class="fg">
+        <label class="fl">Contexte</label>
+        <div class="chips" id="chips-ctx">
+          <div class="chip" data-v="Prévention" onclick="selChip(this,'ctx')">Prévention</div>
+          <div class="chip" data-v="Curatif" onclick="selChip(this,'ctx')">Curatif</div>
+          <div class="chip" data-v="Pré-entraînement" onclick="selChip(this,'ctx')">Pré-entraî.</div>
+          <div class="chip" data-v="Post-entraînement" onclick="selChip(this,'ctx')">Post-entraî.</div>
+          <div class="chip" data-v="Pré-match" onclick="selChip(this,'ctx')">Pré-match</div>
+          <div class="chip" data-v="Post-match" onclick="selChip(this,'ctx')">Post-match</div>
+          <div class="chip" data-v="Récupération" onclick="selChip(this,'ctx')">Récupération</div>
+        </div>
+      </div>
+
+      <!-- ACTES AJOUTÉS -->
+      <label class="fl">Actes <span id="actes-count" style="font-weight:400;text-transform:none;letter-spacing:0"></span></label>
+      <div class="actes-list" id="actes-list">
+        <div class="empty" id="actes-empty" style="padding:16px">
+          <p>Aucun acte — ajoutez-en un ci-dessous</p>
+        </div>
+      </div>
+
+      <!-- BOUTON AJOUTER ACTE -->
+      <button class="add-acte-btn" onclick="openModal('modal-acte')">+ Ajouter un acte (strapping / soin)</button>
+
+      <!-- COMMENTAIRE GLOBAL -->
+      <div class="fg" style="margin-top:13px">
+        <label class="fl">Commentaire (optionnel)</label>
+        <textarea id="input-comment" placeholder="Observations générales, EVA, évolution…"></textarea>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top:2px" onclick="submitSoin()">✓ Enregistrer la séance</button>
+    </div>
+  </div>
+
+  <div class="sec">Mes soins d'aujourd'hui</div>
+  <div class="card" id="today-list"></div>
+</div>
+
+<!-- ② JOURNAL ─────────────────────────────────────────── -->
+<div class="page" id="pg-journal">
+  <div class="frow" id="frow-journal">
+    <div class="fchip on" data-v="all" onclick="filterJ(this)">Tous</div>
+    <div class="fchip" data-v="STRAPPING" onclick="filterJ(this)">Strapping</div>
+    <div class="fchip" data-v="SOINS" onclick="filterJ(this)">Soins</div>
+    <div class="fchip" data-v="URGENCE" onclick="filterJ(this)">Urgences</div>
+  </div>
+  <div id="journal-content"></div>
+</div>
+
+<!-- ③ STATS ─────────────────────────────────────────── -->
+<div class="page" id="pg-stats">
+  <div class="frow" id="frow-stats">
+    <div class="fchip on" data-v="all" onclick="filterSt(this)">Tous rass.</div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val" id="st-tot">0</div><div class="lbl">Séances</div></div>
+    <div class="stat-box" style="background:var(--blue-light)"><div class="val" id="st-actes" style="color:var(--blue-mid)">0</div><div class="lbl">Actes totaux</div></div>
+    <div class="stat-box red"><div class="val" id="st-str">0</div><div class="lbl">Strappings</div></div>
+    <div class="stat-box green"><div class="val" id="st-soi">0</div><div class="lbl">Soins</div></div>
+  </div>
+
+  <!-- CAMEMBERTS -->
+  <div class="card">
+    <div class="card-hd"><h2>Répartition des catégories</h2></div>
+    <div class="card-bd" style="display:flex;justify-content:center">
+      <div style="text-align:center">
+        <svg id="pie-cats" width="180" height="180" viewBox="0 0 180 180"></svg>
+        <div id="pie-cats-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="card">
+      <div class="card-hd"><h2>Zones</h2></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;align-items:center">
+        <svg id="pie-zones" width="140" height="140" viewBox="0 0 140 140"></svg>
+        <div id="pie-zones-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h2>Contexte</h2></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;align-items:center">
+        <svg id="pie-ctx" width="140" height="140" viewBox="0 0 140 140"></svg>
+        <div id="pie-ctx-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-hd"><h2>Par joueur (actes)</h2></div><div class="card-bd" id="st-joueurs"></div></div>
+  <div class="card"><div class="card-hd"><h2>Articulations les plus traitées</h2></div><div class="card-bd" id="st-zones"></div></div>
+  <div class="card"><div class="card-hd"><h2>Techniques</h2></div><div class="card-bd" id="st-tech"></div></div>
+  <div class="card"><div class="card-hd"><h2>Par praticien</h2></div><div class="card-bd" id="st-prat"></div></div>
+</div>
+
+<!-- ④ RASSEMBLEMENTS ─────────────────────────────────── -->
+<div class="page" id="pg-rass">
+  <button class="btn btn-primary" style="margin-bottom:14px" onclick="openModal('modal-rass')">+ Nouveau rassemblement</button>
+  <div id="rass-list"></div>
+</div>
+
+<!-- ⑤ RÉGLAGES ─────────────────────────────────────── -->
+<div class="page" id="pg-reglages">
+  <div class="sec">Joueurs</div>
+  <div class="card">
+    <div class="card-hd"><h2>Gestion des joueurs</h2><div class="sp"></div>
+      <button class="btn btn-primary btn-sm" onclick="openJoueurModal()">+ Ajouter</button></div>
+    <div class="card-bd" id="joueurs-list"></div>
+  </div>
+  <div class="sec">Praticiens</div>
+  <div class="card">
+    <div class="card-hd"><h2>Kinésithérapeutes</h2><div class="sp"></div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-prat-add')">+ Ajouter</button></div>
+    <div class="card-bd" id="prat-manage-list"></div>
+  </div>
+  <div class="sec">Données</div>
+  <div class="card">
+    <div class="card-bd">
+      <button class="btn btn-primary" style="margin-bottom:9px" onclick="exportJSON()">⬇ Exporter JSON (kiné → master)</button>
+      <button class="btn btn-grey" style="margin-bottom:9px" onclick="exportCSV()">⬇ Exporter CSV (tableur)</button>
+      <div class="div"></div>
+      <div class="import-zone" onclick="document.getElementById('file-import').click()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>Importer un JSON d'un kiné (fusion sans doublon)</p>
+      </div>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importJSON(event)">
+      <div class="div"></div>
+      <button class="btn btn-red" onclick="confirmReset()">🗑 Réinitialiser toutes les données</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── NAV ─────────────────────────────────────────── -->
+<nav class="bnav">
+  <button class="nbtn active" id="nb-saisie" onclick="goPage('saisie')">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Saisie</button>
+  <button class="nbtn" id="nb-journal" onclick="goPage('journal')">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Journal</button>
+  <button class="nbtn" id="nb-stats" onclick="goPage('stats')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Stats</button>
+  <button class="nbtn" id="nb-rass" onclick="goPage('rass')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Rass.</button>
+  <button class="nbtn" id="nb-reglages" onclick="goPage('reglages')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</button>
+</nav>
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Praticien -->
+<div class="moverlay" id="modal-prat">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>👤 Qui êtes-vous ?</h3>
+    <div id="prat-btns"></div>
+    <button class="btn btn-grey" onclick="closeModal('modal-prat')">Annuler</button>
+  </div>
+</div>
+
+<!-- Ajouter un acte (modal principale de saisie articulation) -->
+<div class="moverlay" id="modal-acte">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-acte-h">➕ Ajouter un acte</h3>
+
+    <!-- Catégorie multi-select -->
+    <div class="fg">
+      <label class="fl">Catégorie <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(multi-sélection possible)</span></label>
+      <div class="chips" id="chips-acat">
+        <div class="chip" data-v="STRAPPING" onclick="togActeCat(this)">🩹 Strapping</div>
+        <div class="chip" data-v="SOINS" onclick="togActeCat(this)">🤝 Soins</div>
+        <div class="chip" data-v="URGENCE" onclick="togActeCat(this)">🚨 Urgence</div>
+      </div>
+    </div>
+
+    <!-- Zone : articulation par articulation, multi-select pour strapping -->
+    <div class="fg">
+      <label class="fl" id="azone-label">Articulation(s) / Zone(s) <span id="azone-hint" style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px"></span></label>
+
+      <!-- Côté -->
+      <p class="modal-section">↔️ Côté</p>
+      <div class="chips" style="margin-bottom:10px" id="chips-aside">
+        <div class="chip" data-v="G" onclick="togChip(this,'aside')">Gauche</div>
+        <div class="chip" data-v="D" onclick="togChip(this,'aside')">Droit</div>
+        <div class="chip" data-v="Bil." onclick="togChip(this,'aside')">Bilatéral</div>
+      </div>
+
+      <p class="modal-section">🦵 Membre inférieur</p>
+      <div class="chips" style="margin-bottom:10px" id="chips-azone-mi">
+        <div class="chip" data-v="Orteils" onclick="zoneChip(this)">Orteils</div>
+        <div class="chip" data-v="Métatarses" onclick="zoneChip(this)">Métatarses</div>
+        <div class="chip" data-v="Médio-pied" onclick="zoneChip(this)">Médio-pied</div>
+        <div class="chip" data-v="Cheville" onclick="zoneChip(this)">Cheville</div>
+        <div class="chip" data-v="Mollet" onclick="zoneChip(this)">Mollet</div>
+        <div class="chip" data-v="Tendon d'Achille" onclick="zoneChip(this)">Achille</div>
+        <div class="chip" data-v="Genou" onclick="zoneChip(this)">Genou</div>
+        <div class="chip" data-v="Cuisse ant." onclick="zoneChip(this)">Cuisse ant.</div>
+        <div class="chip" data-v="Cuisse post." onclick="zoneChip(this)">Cuisse post.</div>
+        <div class="chip" data-v="Adducteurs" onclick="zoneChip(this)">Adducteurs</div>
+        <div class="chip" data-v="Hanche" onclick="zoneChip(this)">Hanche</div>
+        <div class="chip" data-v="Fessier" onclick="zoneChip(this)">Fessier</div>
+      </div>
+
+      <p class="modal-section">🫀 Rachis / Tronc</p>
+      <div class="chips" style="margin-bottom:10px" id="chips-azone-rachis">
+        <div class="chip" data-v="Lombaires" onclick="zoneChip(this)">Lombaires</div>
+        <div class="chip" data-v="Thoracique" onclick="zoneChip(this)">Thoracique</div>
+        <div class="chip" data-v="Cervicales" onclick="zoneChip(this)">Cervicales</div>
+        <div class="chip" data-v="Abdominaux" onclick="zoneChip(this)">Abdominaux</div>
+        <div class="chip" data-v="Côtes" onclick="zoneChip(this)">Côtes</div>
+      </div>
+
+      <p class="modal-section">💪 Membre supérieur</p>
+      <div class="chips" id="chips-azone-ms">
+        <div class="chip" data-v="Épaule" onclick="zoneChip(this)">Épaule</div>
+        <div class="chip" data-v="Acromio-claviculaire" onclick="zoneChip(this)">AC</div>
+        <div class="chip" data-v="Coude" onclick="zoneChip(this)">Coude</div>
+        <div class="chip" data-v="Épicondyle" onclick="zoneChip(this)">Épicondyle</div>
+        <div class="chip" data-v="Avant-bras" onclick="zoneChip(this)">Avant-bras</div>
+        <div class="chip" data-v="Poignet" onclick="zoneChip(this)">Poignet</div>
+        <div class="chip" data-v="Main" onclick="zoneChip(this)">Main</div>
+        <div class="chip" data-v="Pouce" onclick="zoneChip(this)">Pouce</div>
+        <div class="chip" data-v="Doigt 2" onclick="zoneChip(this)">D2</div>
+        <div class="chip" data-v="Doigt 3" onclick="zoneChip(this)">D3</div>
+        <div class="chip" data-v="Doigt 4" onclick="zoneChip(this)">D4</div>
+        <div class="chip" data-v="Doigt 5" onclick="zoneChip(this)">D5</div>
+      </div>
+    </div>
+
+    <!-- Techniques (multi) -->
+    <div class="fg" id="fg-atech">
+      <label class="fl">Techniques <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(multi)</span></label>
+      <div class="chips" id="chips-atech">
+        <div class="chip" data-v="Massage" onclick="togChip(this,'atech')">Massage</div>
+        <div class="chip" data-v="Étirements" onclick="togChip(this,'atech')">Étirements</div>
+        <div class="chip" data-v="Mob. passive" onclick="togChip(this,'atech')">Mob. passive</div>
+        <div class="chip" data-v="Mob. active" onclick="togChip(this,'atech')">Mob. active</div>
+        <div class="chip" data-v="Renforcement" onclick="togChip(this,'atech')">Renforcement</div>
+        <div class="chip" data-v="Th. manuelle" onclick="togChip(this,'atech')">Th. manuelle</div>
+        <div class="chip" data-v="Ostéopathie" onclick="togChip(this,'atech')">Ostéopathie</div>
+        <div class="chip" data-v="TCAR" onclick="togChip(this,'atech')">TCAR</div>
+        <div class="chip" data-v="Laser" onclick="togChip(this,'atech')">Laser</div>
+        <div class="chip" data-v="Kinésiotaping" onclick="togChip(this,'atech')">Kinésiotaping</div>
+        <div class="chip" data-v="Cryothérapie" onclick="togChip(this,'atech')">Cryothérapie</div>
+        <div class="chip" data-v="Ultrasons" onclick="togChip(this,'atech')">Ultrasons</div>
+      </div>
+    </div>
+
+    <!-- Sévérité (conditionnelle) -->
+    <div class="fg" id="fg-asev" style="display:none">
+      <label class="fl">Sévérité</label>
+      <div class="chips" id="chips-asev">
+        <div class="chip" data-v="Légère" onclick="selChip(this,'asev')">🟢 Légère</div>
+        <div class="chip" data-v="Modérée" onclick="selChip(this,'asev')">🟡 Modérée</div>
+        <div class="chip" data-v="Sévère" onclick="selChip(this,'asev')">🔴 Sévère</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-grey" onclick="closeModal('modal-acte')">Annuler</button>
+      <button class="btn btn-primary" onclick="addActe()">+ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rassemblement -->
+<div class="moverlay" id="modal-rass">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📅 Nouveau rassemblement</h3>
+    <div class="fg"><label class="fl">Nom</label>
+      <input type="text" id="rass-nom" placeholder="Stage Clairefontaine mai 2026"></div>
+    <div class="fg"><label class="fl">Type</label>
+      <div class="chips" id="chips-rtype">
+        <div class="chip" data-v="Stage" onclick="selChip(this,'rtype')">Stage</div>
+        <div class="chip" data-v="Match amical" onclick="selChip(this,'rtype')">Match amical</div>
+        <div class="chip" data-v="Match officiel" onclick="selChip(this,'rtype')">Match officiel</div>
+        <div class="chip" data-v="Tournoi" onclick="selChip(this,'rtype')">Tournoi</div>
+        <div class="chip" data-v="Détection" onclick="selChip(this,'rtype')">Détection</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="fg" style="flex:1"><label class="fl">Début</label><input type="date" id="rass-debut"></div>
+      <div class="fg" style="flex:1"><label class="fl">Fin</label><input type="date" id="rass-fin"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-grey" onclick="closeModal('modal-rass')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRass()">Créer &amp; activer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Joueur -->
+<div class="moverlay" id="modal-joueur">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-joueur-h">➕ Ajouter un joueur</h3>
+    <div class="fg"><label class="fl">Nom</label>
+      <input type="text" id="joueur-nom-in" placeholder="KARABATIC Nikola"></div>
+    <div class="fg"><label class="fl">Poste</label>
+      <div class="chips" id="chips-poste">
+        <div class="chip" data-v="Gardien" onclick="selChip(this,'poste')">Gardien</div>
+        <div class="chip" data-v="Ailier G" onclick="selChip(this,'poste')">Ailier G</div>
+        <div class="chip" data-v="Arrière G" onclick="selChip(this,'poste')">Arrière G</div>
+        <div class="chip" data-v="Demi-centre" onclick="selChip(this,'poste')">Demi-centre</div>
+        <div class="chip" data-v="Pivot" onclick="selChip(this,'poste')">Pivot</div>
+        <div class="chip" data-v="Arrière D" onclick="selChip(this,'poste')">Arrière D</div>
+        <div class="chip" data-v="Ailier D" onclick="selChip(this,'poste')">Ailier D</div>
+      </div>
+    </div>
+    <input type="hidden" id="joueur-edit-id">
+    <div class="btn-row">
+      <button class="btn btn-grey" onclick="closeModal('modal-joueur')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveJoueur()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ajout praticien -->
+<div class="moverlay" id="modal-prat-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>➕ Ajouter un kiné</h3>
+    <div class="fg"><label class="fl">Prénom / Identifiant</label>
+      <input type="text" id="prat-add-in" placeholder="Flo, JC, Seb…"></div>
+    <div class="btn-row">
+      <button class="btn btn-grey" onclick="closeModal('modal-prat-add')">Annuler</button>
+      <button class="btn btn-primary" onclick="savePratAdd()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Détail séance -->
+<div class="moverlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="detail-h">Séance</h3>
+    <div id="detail-body"></div>
+    <div style="height:10px"></div>
+    <button class="btn btn-red" onclick="deleteSoin()">🗑 Supprimer cette séance</button>
+    <div style="height:8px"></div>
+    <button class="btn btn-grey" onclick="closeModal('modal-detail')">Fermer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════ STATE
+let S = {
+  joueurs:[
+    {id:'j1',nom:'TOURNAT',poste:'Gardien'},
+    {id:'j2',nom:'KONAN',poste:'Ailier D'},
+    {id:'j3',nom:'MINNE',poste:'Arrière G'},
+    {id:'j4',nom:'REMILI',poste:'Demi-centre'},
+    {id:'j5',nom:'BRIET',poste:'Pivot'},
+    {id:'j6',nom:'RICHARDSON',poste:'Arrière D'},
+    {id:'j7',nom:'FABREGAS',poste:'Ailier G'},
+    {id:'j8',nom:'MEM',poste:'Arrière D'},
+    {id:'j9',nom:'GREBILLE',poste:'Gardien'},
+    {id:'j10',nom:'NAHI',poste:'Ailier D'},
+    {id:'j11',nom:'PRANDI',poste:'Demi-centre'},
+    {id:'j12',nom:'LAGARDE',poste:'Arrière G'},
+  ],
+  praticiens:['FLO','JC','SEB','EB'],
+  rassemblements:[],
+  soins:[], // chaque soin = {id, ts, rassId, praticien, joueurId, contexte, commentaire, actes:[]}
+  currentPrat:null,
+  currentRass:null,
+};
+
+// actes en cours de construction avant validation
+let pendingActes = [];
+let detailId = null, jFilter = 'all', stFilter = 'all';
+
+function save(){localStorage.setItem('edf_v5',JSON.stringify(S));}
+function load(){const d=localStorage.getItem('edf_v5');if(d)try{S={...S,...JSON.parse(d)};}catch(e){}}
+
+// ═══════════════════════════════ BOOT
+document.addEventListener('DOMContentLoaded',()=>{
+  load();
+  setInterval(tick,1000); tick();
+  document.querySelectorAll('.moverlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
+  // Sévérité conditionnelle sur catégorie acte
+  document.querySelectorAll('#chips-acat .chip').forEach(c=>c.addEventListener('click',()=>{
+    const v=gc('acat');
+    document.getElementById('fg-asev').style.display=(v==='SOINS'||v==='URGENCE')?'':'none';
+  }));
+  renderAll();
+});
+
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+function renderAll(){renderJoueurSel();renderPratBtns();renderJoueursList();renderPratManage();renderRassList();renderToday();renderJournal();renderStats();updateHdr();checkWarns();}
+
+// ═══════════════════════════════ NAV
+function goPage(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(e=>e.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  document.getElementById('nb-'+p).classList.add('active');
+  if(p==='stats')renderStats();
+  if(p==='journal')renderJournal();
+  if(p==='rass')renderRassList();
+  if(p==='reglages'){renderJoueursList();renderPratManage();}
+}
+
+// ═══════════════════════════════ HEADER
+function updateHdr(){
+  const r=S.rassemblements.find(r=>r.id===S.currentRass);
+  document.getElementById('hdr-rass').textContent=r?r.nom:'Aucun rassemblement actif';
+  document.getElementById('hdr-prat').textContent=S.currentPrat||'Choisir kiné';
+}
+function checkWarns(){
+  document.getElementById('warn-rass').style.display=S.currentRass?'none':'';
+  document.getElementById('warn-prat').style.display=S.currentPrat?'none':'';
+}
+
+// ═══════════════════════════════ CHIPS
+function selChip(el,g){
+  // find the closest ancestor with id="chips-{g}" or search by group
+  document.querySelectorAll(`#chips-${g} .chip, [id^="chips-"] .chip[data-group="${g}"]`).forEach(c=>c.classList.remove('on'));
+  // fallback: deselect all chips in same parent
+  el.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+function togChip(el){el.classList.toggle('on');}
+function gc(g){
+  // try by chips-{g} id first
+  let el=document.querySelector(`#chips-${g} .chip.on`);
+  if(!el){
+    // try finding in modal context
+    el=document.querySelector(`.chip.on[data-gkey="${g}"]`);
+  }
+  return el?el.dataset.v:null;
+}
+function gcModal(g){
+  // search within modal-acte for the group label
+  const chips=document.querySelectorAll(`#modal-acte #chips-${g} .chip.on`);
+  return chips.length?chips[0].dataset.v:null;
+}
+function getMulti(containerId){
+  return[...document.querySelectorAll(`#${containerId} .chip.on`)].map(c=>c.dataset.v);
+}
+
+// ═══════════════════════════════ ACTE MODAL
+let _acteIsStrapping = false;
+
+function togActeCat(el){
+  el.classList.toggle('on');
+  // Recalcule si strapping est actif (pour le comportement zone)
+  _acteIsStrapping = !!document.querySelector('#chips-acat .chip[data-v="STRAPPING"].on');
+  // Sévérité visible si SOINS ou URGENCE sélectionné
+  const hasSoins = !!document.querySelector('#chips-acat .chip[data-v="SOINS"].on');
+  const hasUrg   = !!document.querySelector('#chips-acat .chip[data-v="URGENCE"].on');
+  document.getElementById('fg-asev').style.display=(hasSoins||hasUrg)?'':'none';
+  // Si plus de strapping et multi-zones, réduire à 1
+  if(!_acteIsStrapping){
+    const allZones=getAllZoneChips();
+    const first=allZones.find(c=>c.classList.contains('on'));
+    allZones.forEach(c=>c.classList.remove('on'));
+    if(first)first.classList.add('on');
+  }
+  updateAzoneHint();
+}
+
+function openActeModal(){
+  document.querySelectorAll('#modal-acte .chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('fg-asev').style.display='none';
+  _acteIsStrapping=false;
+  updateAzoneHint();
+  openModal('modal-acte');
+}
+
+function getAllZoneChips(){
+  return[...document.querySelectorAll('#chips-azone-mi .chip, #chips-azone-rachis .chip, #chips-azone-ms .chip')];
+}
+
+function updateAzoneHint(){
+  const hint=document.getElementById('azone-hint');
+  hint.textContent=_acteIsStrapping?'(multi-sélection possible)':'(1 zone)';
+}
+
+// Chip zone : multi si strapping, mono sinon
+function zoneChip(el){
+  if(_acteIsStrapping){
+    el.classList.toggle('on');
+  } else {
+    getAllZoneChips().forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+  }
+}
+
+function selChipInParent(el){
+  el.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function addActe(){
+  const cats=[...document.querySelectorAll('#chips-acat .chip.on')].map(c=>c.dataset.v);
+  if(!cats.length){toast('Choisissez au moins une catégorie','err');return;}
+
+  const selectedZones=getAllZoneChips().filter(c=>c.classList.contains('on')).map(c=>c.dataset.v);
+  if(!selectedZones.length){toast('Choisissez au moins une zone','err');return;}
+
+  const cotes=[...document.querySelectorAll('#chips-aside .chip.on')].map(c=>c.dataset.v);
+  const coteStr=cotes.length?cotes.join('+'):'';
+  const zones=selectedZones.map(z=>coteStr?z+' '+coteStr:z);
+
+  const techs=getMulti('chips-atech');
+  const sev=document.querySelector('#chips-asev .chip.on')?.dataset.v||'';
+
+  // Si pas de strapping parmi les cats, on force mono-zone
+  const hasStrap=cats.includes('STRAPPING');
+  const finalZones=hasStrap?zones:[zones[0]];
+
+  pendingActes.push({cats, zones:finalZones, techs, sev});
+
+  closeModal('modal-acte');
+  renderPendingActes();
+  const zLabel=finalZones.join(' + ');
+  const cLabel=cats.join('+');
+  toast(`${cLabel} — ${zLabel}`,'ok');
+}
+
+function renderPendingActes(){
+  const list=document.getElementById('actes-list');
+  const empty=document.getElementById('actes-empty');
+  const count=document.getElementById('actes-count');
+  count.textContent=pendingActes.length?`(${pendingActes.length})`:'';
+  if(!pendingActes.length){
+    list.innerHTML='';
+    list.appendChild(empty);
+    empty.style.display='';
+    return;
+  }
+  empty.style.display='none';
+  list.innerHTML=pendingActes.map((a,i)=>{
+    const cats=a.cats||[a.cat];
+    const hasStr=cats.includes('STRAPPING'), hasUrg=cats.includes('URGENCE');
+    const catCls=hasUrg?'urg':hasStr?'str':'soi';
+    const icons=cats.map(c=>c==='STRAPPING'?'🩹':c==='URGENCE'?'🚨':'🤝').join('');
+    const catLabel=cats.join(' + ');
+    const zonesLabel=(a.zones||[a.zone]).join(' + ');
+    const techStr=(a.techs||[]).length?a.techs.join(' · '):'—';
+    const sevStr=a.sev?` · ${a.sev}`:'';
+    return`<div class="acte-pill">
+      <div class="acte-pill-body">
+        <div class="acte-pill-cat ${catCls}">${icons} ${catLabel} — ${zonesLabel}</div>
+        <div class="acte-pill-detail">${techStr}${sevStr}</div>
+      </div>
+      <button class="acte-remove" onclick="removeActe(${i})">×</button>
+    </div>`;
+  }).join('');
+}
+function removeActe(i){pendingActes.splice(i,1);renderPendingActes();}
+
+// ═══════════════════════════════ SUBMIT SÉANCE
+function submitSoin(){
+  if(!S.currentPrat){toast('Identifiez-vous d\'abord','warn');return;}
+  if(!S.currentRass){toast('Activez un rassemblement','warn');return;}
+  const jid=document.getElementById('sel-joueur').value;
+  if(!jid){toast('Sélectionnez un joueur','err');return;}
+  if(!pendingActes.length){toast('Ajoutez au moins un acte','err');return;}
+  const ctx=getMulti('chips-ctx')[0]||'';
+  const comment=document.getElementById('input-comment').value.trim();
+  const soin={
+    id:'s'+Date.now(),ts:new Date().toISOString(),
+    rassId:S.currentRass,praticien:S.currentPrat,
+    joueurId:jid,contexte:ctx,commentaire:comment,
+    actes:[...pendingActes],
+  };
+  S.soins.push(soin);save();
+  const j=S.joueurs.find(j=>j.id===jid);
+  toast(`✓ ${j?j.nom:''} — ${pendingActes.length} acte(s)`,'ok');
+  // reset
+  pendingActes=[];
+  renderPendingActes();
+  document.getElementById('sel-joueur').value='';
+  document.getElementById('input-comment').value='';
+  document.querySelectorAll('#chips-ctx .chip').forEach(c=>c.classList.remove('on'));
+  renderToday();
+}
+
+// ═══════════════════════════════ TODAY
+function renderToday(){
+  const today=new Date().toDateString();
+  const list=S.soins.filter(s=>new Date(s.ts).toDateString()===today&&s.praticien===S.currentPrat);
+  const el=document.getElementById('today-list');
+  if(!list.length){el.innerHTML=emptyHTML('Aucune séance enregistrée aujourd\'hui');return;}
+  el.innerHTML=[...list].reverse().map(s=>soinCard(s)).join('');
+}
+
+// ═══════════════════════════════ SOIN CARD
+function soinCard(s){
+  const j=S.joueurs.find(j=>j.id===s.joueurId);
+  const nom=j?j.nom:'?';
+  const init=nom.slice(0,2);
+  // determine dominant category for avatar color
+  const hasUrg=s.actes.some(a=>(a.cats||[a.cat]).includes('URGENCE'));
+  const hasStr=s.actes.some(a=>(a.cats||[a.cat]).includes('STRAPPING'));
+  const avCls=hasUrg?'orange':hasStr?'red':'';
+  const time=new Date(s.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const tags=s.actes.flatMap(a=>{
+    const cats=a.cats||[a.cat];
+    const hasS=cats.includes('STRAPPING'), hasU=cats.includes('URGENCE');
+    const cls=hasU?'at-urg':hasS?'at-str':'at-soi';
+    const icons=cats.map(c=>c==='STRAPPING'?'🩹':c==='URGENCE'?'🚨':'🤝').join('');
+    const zones=a.zones||[a.zone];
+    return[`<span class="acte-tag ${cls}">${icons} ${zones.join(' + ')}</span>`];
+  }).join('');
+  return`<div class="soin-item" onclick="openDetail('${s.id}')">
+    <div class="soin-av ${avCls}">${init}</div>
+    <div class="soin-info">
+      <div class="jn">${nom}${j&&j.poste?` <span style="font-size:10px;color:var(--g3);font-weight:400">${j.poste}</span>`:''}</div>
+      <div style="margin-top:4px;line-height:1.8">${tags}</div>
+      ${s.contexte?`<div class="detail" style="margin-top:3px">${s.contexte}</div>`:''}
+    </div>
+    <div class="soin-meta"><div class="time">${time}</div><div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--g3);margin-top:2px">${s.actes.length} acte(s)</div></div>
+  </div>`;
+}
+
+// ═══════════════════════════════ JOURNAL
+function filterJ(el){document.querySelectorAll('#frow-journal .fchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');jFilter=el.dataset.v;renderJournal();}
+function renderJournal(){
+  const el=document.getElementById('journal-content');
+  let list=[...S.soins].filter(s=>{
+    if(jFilter==='all')return true;
+    return s.actes.some(a=>(a.cats||[a.cat]).includes(jFilter));
+  }).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  if(!list.length){el.innerHTML=emptyHTML('Aucune séance dans le journal');return;}
+  const groups={};
+  list.forEach(s=>{
+    const d=new Date(s.ts).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    if(!groups[d])groups[d]=[];groups[d].push(s);
+  });
+  el.innerHTML=Object.entries(groups).map(([d,ls])=>`
+    <div class="sec" style="text-transform:capitalize">${d}</div>
+    <div class="card">${ls.map(s=>soinCard(s)).join('')}</div>`).join('');
+}
+
+// ═══════════════════════════════ DETAIL
+function openDetail(id){
+  detailId=id;
+  const s=S.soins.find(s=>s.id===id);if(!s)return;
+  const j=S.joueurs.find(j=>j.id===s.joueurId);
+  const r=S.rassemblements.find(r=>r.id===s.rassId);
+  document.getElementById('detail-h').textContent=(j?j.nom:'?')+' — '+new Date(s.ts).toLocaleDateString('fr-FR');
+  const actesHTML=s.actes.map((a,i)=>{
+    const icon=a.cat==='STRAPPING'?'🩹':a.cat==='URGENCE'?'🚨':'🤝';
+    const cats=a.cats||[a.cat];
+    const icons=cats.map(c=>c==='STRAPPING'?'🩹':c==='URGENCE'?'🚨':'🤝').join('');
+    const catLabel=cats.join(' + ');
+    const zLabel=(a.zones||[a.zone]).join(' + ');
+    return`<div style="background:var(--g0);border-radius:8px;padding:10px 12px;margin-bottom:7px">
+      <div style="font-weight:800;font-size:13px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase">${icons} ${catLabel} — ${zLabel}</div>
+      ${a.techs&&a.techs.length?`<div style="font-size:12px;color:var(--g3);margin-top:3px">${a.techs.join(' · ')}</div>`:''}
+      ${a.sev?`<div style="font-size:11px;color:var(--orange);margin-top:2px;font-weight:600">${a.sev}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('detail-body').innerHTML=`
+    <div class="fg"><label class="fl">Heure</label><p>${new Date(s.ts).toLocaleString('fr-FR')}</p></div>
+    <div class="fg"><label class="fl">Rassemblement</label><p>${r?r.nom:'—'}</p></div>
+    <div class="fg"><label class="fl">Praticien</label><p>${s.praticien}</p></div>
+    ${s.contexte?`<div class="fg"><label class="fl">Contexte</label><p>${s.contexte}</p></div>`:''}
+    <div class="fg"><label class="fl">Actes (${s.actes.length})</label>${actesHTML}</div>
+    ${s.commentaire?`<div class="fg"><label class="fl">Commentaire</label><p>${s.commentaire}</p></div>`:''}`;
+  openModal('modal-detail');
+}
+function deleteSoin(){
+  if(!confirm('Supprimer cette séance ?'))return;
+  S.soins=S.soins.filter(s=>s.id!==detailId);save();
+  closeModal('modal-detail');renderToday();renderJournal();renderStats();toast('Supprimé','ok');
+}
+
+// ═══════════════════════════════ CAMEMBERTS SVG
+const PIE_PALETTE = [
+  '#002F87','#E8001A','#00966d','#e07000','#7c3aed','#0891b2',
+  '#be123c','#15803d','#b45309','#1d4ed8','#9f1239','#065f46',
+];
+
+function drawPie(svgId, legendId, data, size) {
+  // data = [{label, value, color?}]
+  const svg = document.getElementById(svgId);
+  const leg = document.getElementById(legendId);
+  if(!svg||!leg) return;
+  svg.innerHTML=''; leg.innerHTML='';
+
+  const total = data.reduce((s,d)=>s+d.value,0);
+  if(!total){
+    svg.innerHTML=`<circle cx="${size/2}" cy="${size/2}" r="${size/2-4}" fill="#e8eaf2"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" fill="#868fac" font-size="11" font-family="Barlow,sans-serif">Aucune donnée</text>`;
+    return;
+  }
+
+  const cx=size/2, cy=size/2, r=size/2-6, ri=r*0.38;
+  let angle=-Math.PI/2;
+
+  data.forEach((d,i)=>{
+    const color = d.color||PIE_PALETTE[i%PIE_PALETTE.length];
+    const slice = (d.value/total)*2*Math.PI;
+    if(slice===0) return;
+
+    const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(angle+slice), y2=cy+r*Math.sin(angle+slice);
+    const xi1=cx+ri*Math.cos(angle), yi1=cy+ri*Math.sin(angle);
+    const xi2=cx+ri*Math.cos(angle+slice), yi2=cy+ri*Math.sin(angle+slice);
+    const large=slice>Math.PI?1:0;
+
+    // Donut slice
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${ri},${ri} 0 ${large},0 ${xi1},${yi1} Z`);
+    path.setAttribute('fill',color);
+    path.setAttribute('stroke','#fff');
+    path.setAttribute('stroke-width','1.5');
+    svg.appendChild(path);
+
+    // Pourcentage au milieu du segment si > 8%
+    const pct=Math.round(d.value/total*100);
+    if(pct>=8){
+      const midA=angle+slice/2;
+      const lx=cx+(r+ri)/2*Math.cos(midA), ly=cy+(r+ri)/2*Math.sin(midA);
+      const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x',lx); txt.setAttribute('y',ly+4);
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('fill','#fff');
+      txt.setAttribute('font-size', size<160?'9':'10');
+      txt.setAttribute('font-weight','700');
+      txt.setAttribute('font-family','Barlow Condensed,sans-serif');
+      txt.textContent=pct+'%';
+      svg.appendChild(txt);
+    }
+
+    angle+=slice;
+
+    // Légende
+    const item=document.createElement('div');
+    item.style.cssText='display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#454e6b;white-space:nowrap';
+    item.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${color};flex-shrink:0;display:inline-block"></span>${d.label} (${d.value})`;
+    leg.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════ STATS
+function filterSt(el){document.querySelectorAll('#frow-stats .fchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');stFilter=el.dataset.v;renderStats();}
+function renderStats(){
+  const row=document.getElementById('frow-stats');
+  const existing=new Set([...row.querySelectorAll('.fchip')].map(c=>c.dataset.v));
+  S.rassemblements.forEach(r=>{
+    if(!existing.has(r.id)){const c=document.createElement('div');c.className='fchip';c.dataset.v=r.id;c.textContent=r.nom;c.onclick=function(){filterSt(this);};row.appendChild(c);}
+  });
+  const soins=stFilter==='all'?S.soins:S.soins.filter(s=>s.rassId===stFilter);
+  // flatten actes
+  const allActes=soins.flatMap(s=>s.actes.map(a=>({...a,joueurId:s.joueurId,praticien:s.praticien,contexte:s.contexte,soinId:s.id})));
+  document.getElementById('st-tot').textContent=soins.length;
+  document.getElementById('st-actes').textContent=allActes.length;
+  document.getElementById('st-str').textContent=allActes.filter(a=>(a.cats||[a.cat]).includes('STRAPPING')).length;
+  document.getElementById('st-soi').textContent=allActes.filter(a=>(a.cats||[a.cat]).includes('SOINS')).length;
+  const bars=(id,color,extract)=>{
+    const m={};
+    allActes.forEach(a=>{const vals=extract(a);(Array.isArray(vals)?vals:[vals]).forEach(v=>{if(v)m[v]=(m[v]||0)+1;});});
+    const mx=Math.max(...Object.values(m),1);
+    document.getElementById(id).innerHTML=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,n])=>
+      `<div class="bar-row"><span class="bar-lbl">${k}</span><div class="bar-track"><div class="bar-fill ${color}" style="width:${Math.round(n/mx*100)}%"></div></div><span class="bar-n">${n}</span></div>`
+    ).join('')||emptyHTML('Aucune donnée');
+  };
+  bars('st-joueurs','blue',a=>{const j=S.joueurs.find(j=>j.id===a.joueurId);return j?j.nom:'?';});
+  bars('st-zones','red',a=>a.zones||[a.zone]);
+  bars('st-tech','green',a=>a.techs||[]);
+  // contexte is on soin not acte
+  const ctxMap={};
+  soins.forEach(s=>{if(s.contexte)ctxMap[s.contexte]=(ctxMap[s.contexte]||0)+1;});
+  const mxC=Math.max(...Object.values(ctxMap),1);
+  document.getElementById('st-ctx').innerHTML=Object.entries(ctxMap).sort((a,b)=>b[1]-a[1]).map(([k,n])=>
+    `<div class="bar-row"><span class="bar-lbl">${k}</span><div class="bar-track"><div class="bar-fill orange" style="width:${Math.round(n/mxC*100)}%"></div></div><span class="bar-n">${n}</span></div>`
+  ).join('')||emptyHTML('Aucune donnée');
+  // ── CAMEMBERTS ──
+  // 1. Catégories
+  const catCount={STRAPPING:0,SOINS:0,URGENCE:0};
+  allActes.forEach(a=>(a.cats||[a.cat]).forEach(c=>{if(catCount[c]!==undefined)catCount[c]++;}));
+  drawPie('pie-cats','pie-cats-legend',[
+    {label:'Strapping', value:catCount.STRAPPING, color:'#E8001A'},
+    {label:'Soins',     value:catCount.SOINS,     color:'#00966d'},
+    {label:'Urgence',   value:catCount.URGENCE,   color:'#e07000'},
+  ].filter(d=>d.value>0), 180);
+
+  // 2. Zones (top 8)
+  const zMap={};
+  allActes.forEach(a=>(a.zones||[a.zone]).forEach(z=>{if(z)zMap[z]=(zMap[z]||0)+1;}));
+  const zTop=Object.entries(zMap).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([l,v])=>({label:l,value:v}));
+  drawPie('pie-zones','pie-zones-legend', zTop, 140);
+
+  // 3. Contexte
+  const cMap={};
+  soins.forEach(s=>{if(s.contexte)cMap[s.contexte]=(cMap[s.contexte]||0)+1;});
+  const cData=Object.entries(cMap).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({label:l,value:v}));
+  drawPie('pie-ctx','pie-ctx-legend', cData, 140);
+
+  const pratMap={};
+  soins.forEach(s=>{pratMap[s.praticien]=(pratMap[s.praticien]||0)+s.actes.length;});
+  document.getElementById('st-prat').innerHTML=Object.entries(pratMap).sort((a,b)=>b[1]-a[1]).map(([k,n])=>
+    `<div class="bar-row"><span class="bar-lbl">${k}</span><div class="bar-track"><div class="bar-fill blue" style="width:${Math.round(n/mxP*100)}%"></div></div><span class="bar-n">${n}</span></div>`
+  ).join('')||emptyHTML('Aucune donnée');
+}
+
+// ═══════════════════════════════ RASSEMBLEMENTS
+function saveRass(){
+  const nom=document.getElementById('rass-nom').value.trim();
+  if(!nom){toast('Donnez un nom','err');return;}
+  const r={id:'r'+Date.now(),nom,
+    type:getMulti('chips-rtype')[0]||'Stage',
+    debut:document.getElementById('rass-debut').value,
+    fin:document.getElementById('rass-fin').value,
+    createdAt:new Date().toISOString()};
+  S.rassemblements.push(r);S.currentRass=r.id;save();
+  closeModal('modal-rass');
+  document.getElementById('rass-nom').value='';
+  document.querySelectorAll('#chips-rtype .chip').forEach(c=>c.classList.remove('on'));
+  renderRassList();updateHdr();checkWarns();toast('Rassemblement créé','ok');
+}
+function renderRassList(){
+  const el=document.getElementById('rass-list');
+  if(!S.rassemblements.length){el.innerHTML=emptyHTML('Aucun rassemblement — créez-en un');return;}
+  const sorted=[...S.rassemblements].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  el.innerHTML=sorted.map(r=>{
+    const n=S.soins.filter(s=>s.rassId===r.id).length;
+    const na=S.soins.filter(s=>s.rassId===r.id).reduce((acc,s)=>acc+s.actes.length,0);
+    const active=r.id===S.currentRass;
+    const bg=active?'var(--green)':r.type==='Match officiel'?'var(--red)':r.type==='Match amical'?'var(--orange)':'var(--g4)';
+    const dates=r.debut&&r.fin?r.debut+' → '+r.fin:r.debut||'';
+    return`<div class="rass-card" style="background:${bg}" onclick="setRass('${r.id}')">
+      <div><h3>${r.nom}</h3><div class="rdates">${r.type}${dates?' · '+dates:''}${active?' · ✓ ACTIF':''}</div></div>
+      <div style="text-align:right"><div class="rcount">${na}</div><div style="font-size:10px;opacity:.8">actes</div></div>
+    </div>`;
+  }).join('');
+}
+function setRass(id){S.currentRass=id;save();updateHdr();checkWarns();renderRassList();toast('Activé','ok');}
+
+// ═══════════════════════════════ JOUEURS
+function renderJoueurSel(){
+  const sel=document.getElementById('sel-joueur');const prev=sel.value;
+  sel.innerHTML='<option value="">— Sélectionner —</option>';
+  [...S.joueurs].sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(j=>{
+    const o=document.createElement('option');o.value=j.id;o.textContent=j.nom+(j.poste?' ('+j.poste+')':'');sel.appendChild(o);
+  });sel.value=prev;
+}
+function openJoueurModal(id){
+  document.getElementById('joueur-nom-in').value='';
+  document.getElementById('joueur-edit-id').value='';
+  document.querySelectorAll('#chips-poste .chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('modal-joueur-h').textContent='➕ Ajouter un joueur';
+  if(id){const j=S.joueurs.find(j=>j.id===id);if(!j)return;
+    document.getElementById('joueur-nom-in').value=j.nom;
+    document.getElementById('joueur-edit-id').value=id;
+    document.getElementById('modal-joueur-h').textContent='✏️ Modifier : '+j.nom;
+    setTimeout(()=>{const c=document.querySelector(`#chips-poste .chip[data-v="${j.poste}"]`);if(c)c.classList.add('on');},40);}
+  openModal('modal-joueur');
+}
+function saveJoueur(){
+  const nom=document.getElementById('joueur-nom-in').value.trim().toUpperCase();
+  const poste=getMulti('chips-poste')[0]||'';
+  const editId=document.getElementById('joueur-edit-id').value;
+  if(!nom){toast('Entrez un nom','err');return;}
+  if(editId){const j=S.joueurs.find(j=>j.id===editId);if(j){j.nom=nom;j.poste=poste;}}
+  else S.joueurs.push({id:'j'+Date.now(),nom,poste});
+  save();closeModal('modal-joueur');renderJoueurSel();renderJoueursList();toast('Enregistré','ok');
+}
+function renderJoueursList(){
+  const el=document.getElementById('joueurs-list');
+  const sorted=[...S.joueurs].sort((a,b)=>a.nom.localeCompare(b.nom));
+  if(!sorted.length){el.innerHTML=emptyHTML('Aucun joueur');return;}
+  el.innerHTML=sorted.map(j=>{
+    const n=S.soins.filter(s=>s.joueurId===j.id).reduce((acc,s)=>acc+s.actes.length,0);
+    return`<div class="jr">
+      <span class="jr-nom">${j.nom}${j.poste?` <span style="font-size:11px;color:var(--g3);font-weight:400">${j.poste}</span>`:''}</span>
+      <span class="jr-n">${n}</span>
+      <button class="icon-btn" onclick="openJoueurModal('${j.id}')">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn del" onclick="deleteJoueur('${j.id}')">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+function deleteJoueur(id){
+  const j=S.joueurs.find(j=>j.id===id);
+  const n=S.soins.filter(s=>s.joueurId===id).length;
+  if(!confirm(`Supprimer ${j?j.nom:'ce joueur'}${n?` (${n} séance(s))`:''}?`))return;
+  S.joueurs=S.joueurs.filter(j=>j.id!==id);save();renderJoueurSel();renderJoueursList();toast('Supprimé','ok');
+}
+
+// ═══════════════════════════════ PRATICIENS
+function renderPratBtns(){
+  document.getElementById('prat-btns').innerHTML=S.praticiens.map(p=>
+    `<button class="prat-btn ${S.currentPrat===p?'sel':''}" onclick="setPrat('${p}')">${p}</button>`).join('');
+}
+function setPrat(p){S.currentPrat=p;save();closeModal('modal-prat');updateHdr();checkWarns();renderToday();toast('Connecté : '+p,'ok');}
+function savePratAdd(){
+  const nom=document.getElementById('prat-add-in').value.trim().toUpperCase();
+  if(!nom){toast('Entrez un nom','err');return;}
+  if(S.praticiens.includes(nom)){toast('Déjà existant','warn');return;}
+  S.praticiens.push(nom);save();closeModal('modal-prat-add');renderPratBtns();renderPratManage();toast('Ajouté','ok');
+}
+function renderPratManage(){
+  document.getElementById('prat-manage-list').innerHTML=S.praticiens.map(p=>{
+    const n=S.soins.filter(s=>s.praticien===p).reduce((acc,s)=>acc+s.actes.length,0);
+    return`<div class="jr"><span class="jr-nom">${p}</span><span class="jr-n">${n}</span>
+      <button class="icon-btn del" onclick="deletePrat('${p}')">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button></div>`;
+  }).join('');
+}
+function deletePrat(p){
+  if(!confirm(`Supprimer ${p}?`))return;
+  S.praticiens=S.praticiens.filter(x=>x!==p);
+  if(S.currentPrat===p){S.currentPrat=null;updateHdr();}
+  save();renderPratBtns();renderPratManage();toast('Supprimé','ok');
+}
+
+// ═══════════════════════════════ EXPORT / IMPORT
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({v:5,exportedAt:new Date().toISOString(),exportedBy:S.currentPrat,...S},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`EDF_${S.currentPrat||'export'}_${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Exporté','ok');
+}
+function exportCSV(){
+  const rows=[['Date','Heure','Rassemblement','Praticien','Joueur','Poste','Contexte','Catégorie acte','Zone','Techniques','Sévérité','Commentaire séance']];
+  S.soins.forEach(s=>{
+    const j=S.joueurs.find(j=>j.id===s.joueurId);
+    const r=S.rassemblements.find(r=>r.id===s.rassId);
+    const d=new Date(s.ts);
+    s.actes.forEach(a=>{
+      rows.push([d.toLocaleDateString('fr-FR'),d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+        r?r.nom:'',s.praticien,j?j.nom:'',j?j.poste:'',s.contexte||'',
+        (a.cats||[a.cat]).join('+'),(a.zones||[a.zone]).join('+'),(a.techs||[]).join('|'),a.sev||'',s.commentaire||'']);
+    });
+  });
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`EDF_soins_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast('CSV exporté','ok');
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      const sIds=new Set(S.soins.map(s=>s.id));let added=0;
+      (d.soins||[]).forEach(s=>{if(!sIds.has(s.id)){S.soins.push(s);added++;}});
+      const jIds=new Set(S.joueurs.map(j=>j.id));
+      (d.joueurs||[]).forEach(j=>{if(!jIds.has(j.id))S.joueurs.push(j);});
+      const rIds=new Set(S.rassemblements.map(r=>r.id));
+      (d.rassemblements||[]).forEach(r=>{if(!rIds.has(r.id))S.rassemblements.push(r);});
+      (d.praticiens||[]).forEach(p=>{if(!S.praticiens.includes(p))S.praticiens.push(p);});
+      save();renderAll();toast(`✓ ${added} séance(s) importée(s) (${d.exportedBy||'?'})`,'ok');
+    }catch(err){toast('Fichier invalide','err');}
+    e.target.value='';
+  };r.readAsText(file);
+}
+function confirmReset(){
+  if(!confirm('⚠️ Supprimer TOUTES les données ? Irréversible.'))return;
+  localStorage.removeItem('edf_v5');location.reload();
+}
+
+// ═══════════════════════════════ HELPERS
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast '+(type==='ok'?'ok':type==='err'?'err':type==='warn'?'warn':'');
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+function emptyHTML(msg){return`<div class="empty"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><p>${msg}</p></div>`;}
+</script>
+</body>
+</html>
