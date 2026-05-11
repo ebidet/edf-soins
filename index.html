@@ -582,60 +582,74 @@ function showSync(msg, type=''){
   if(type==='ok') setTimeout(()=>{el.style.opacity='0';},2200);
 }
 
+function binHeaders(withContent=false){
+  const h = {
+    'X-Master-Key': BIN_KEY,
+    'X-Access-Key': BIN_KEY,
+  };
+  if(withContent) h['Content-Type']='application/json';
+  return h;
+}
+
 async function save(){
-  if(_saving){return;}
+  if(_saving) return;
   _saving=true;
   showSync('💾 Sync…');
-  // Sauvegarde locale immédiate
-  localStorage.setItem('edf_v5_local',JSON.stringify(S));
+  localStorage.setItem('edf_v5_local', JSON.stringify(S));
   try{
-    const r=await fetch(BIN_URL,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY,'X-Bin-Versioning':'true'},
-      body:JSON.stringify(S)
+    const r = await fetch(BIN_URL, {
+      method: 'PUT',
+      headers: binHeaders(true),
+      body: JSON.stringify(S)
     });
     if(!r.ok) throw new Error(r.status);
-    const d=await r.json();
-    _lastVersion=d.metadata?.version;
+    const d = await r.json();
+    _lastVersion = d.metadata?.version ?? d.version ?? null;
     showSync('✓ Synchronisé','ok');
-  }catch(e){
+  } catch(e){
+    console.warn('JSONBin save error:',e);
     showSync('⚠ Hors-ligne — données locales','warn');
-  }finally{_saving=false;}
+  } finally { _saving=false; }
 }
 
 async function load(){
   showSync('⟳ Chargement…');
   try{
-    const r=await fetch(BIN_URL+'?meta=true',{headers:{'X-Master-Key':BIN_KEY}});
+    const r = await fetch(BIN_URL, { headers: binHeaders() });
     if(!r.ok) throw new Error(r.status);
-    const d=await r.json();
-    _lastVersion=d.metadata?.version;
-    // Merge : priorité au cloud, garde structure locale pour les défauts
-    S={...S,...d.record};
+    const d = await r.json();
+    // JSONBin v3 : { record: {...}, metadata: {...} }
+    const remote = d.record ?? d;
+    _lastVersion = d.metadata?.version ?? null;
+    if(remote && typeof remote === 'object' && !Array.isArray(remote)){
+      S = {...S, ...remote};
+    }
     showSync('✓ Données chargées','ok');
-  }catch(e){
-    // Fallback : données locales
-    const bk=localStorage.getItem('edf_v5_local');
-    if(bk) try{S={...S,...JSON.parse(bk)};}catch(_){}
-    showSync('⚠ Mode hors-ligne','err');
+  } catch(e){
+    console.warn('JSONBin load error:',e);
+    const bk = localStorage.getItem('edf_v5_local');
+    if(bk) try{ S={...S,...JSON.parse(bk)}; }catch(_){}
+    showSync('⚠ Mode hors-ligne','warn');
   }
 }
 
-// Polling 15s — détecte les soins ajoutés par les autres kinés
 async function pollCloud(){
   if(_saving) return;
   try{
-    const r=await fetch(BIN_URL+'?meta=true',{headers:{'X-Master-Key':BIN_KEY}});
+    const r = await fetch(BIN_URL, { headers: binHeaders() });
     if(!r.ok) return;
-    const d=await r.json();
-    const v=d.metadata?.version;
-    if(_lastVersion!==null && v!==_lastVersion){
-      _lastVersion=v;
-      S={...S,...d.record};
-      renderAll();
-      showSync('🔄 Mis à jour','ok');
+    const d = await r.json();
+    const v = d.metadata?.version ?? null;
+    if(_lastVersion !== null && v !== null && v !== _lastVersion){
+      _lastVersion = v;
+      const remote = d.record ?? d;
+      if(remote && typeof remote === 'object'){
+        S = {...S, ...remote};
+        renderAll();
+        showSync('🔄 Mis à jour','ok');
+      }
     }
-  }catch(_){}
+  } catch(_){}
 }
 
 // ═══════════════════════════════ BOOT
